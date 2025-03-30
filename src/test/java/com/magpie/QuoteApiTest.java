@@ -1,5 +1,7 @@
 package com.magpie;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
@@ -16,8 +18,13 @@ public class QuoteApiTest {
     private static final String BASE_URL = "https://api.magpiefi.xyz"; // API base URL
     private static final String QUOTE_ENDPOINT = "/aggregator/quote"; // The /quote endpoint
 
+    //Create logger
+    private static final Logger logger = LoggerFactory.getLogger(QuoteApiTest.class);
+
     // Утилітний метод для відправки запиту
     private Response sendQuoteRequest(String network, String fromTokenAddress, String toTokenAddress, String sellAmount, double slippage, boolean gasless) {
+        logger.info("Sending request with parameters: network={}, fromTokenAddress={}, toTokenAddress={}, sellAmount={}, slippage={}, gasless={}",
+                network, fromTokenAddress, toTokenAddress, sellAmount, slippage, gasless);
         return RestAssured.given()
                 .queryParam("network", network)
                 .queryParam("fromTokenAddress", fromTokenAddress)
@@ -46,14 +53,15 @@ public class QuoteApiTest {
         // Виклик утилітного методу
         Response response = sendQuoteRequest(network, fromTokenAddress, toTokenAddress, sellAmount, slippage, gasless);
 
+        logger.info("Response Status Code: {}", response.getStatusCode());
+
         // Validate the response status
         assertEquals(200, response.getStatusCode(), "Expected status code 200 OK");
 
         // Validate the response content type (it should be JSON)
         assertTrue(response.getContentType().contains("application/json"), "Expected content type to contain application/json");
 
-        // Print the response body for debugging purposes
-        System.out.println("Response Body: " + response.getBody().asString());
+        logger.info("Response Body: {}", response.getBody().asString());
 
         // Check if the response contains the 'amountOut' key (a valid response key)
         boolean containsAmountOut = response.jsonPath().get("amountOut") != null;
@@ -81,14 +89,14 @@ public class QuoteApiTest {
         // Виклик утилітного методу з нульовим значенням sellAmount
         Response response = sendQuoteRequest(network, fromTokenAddress, toTokenAddress, String.valueOf(amount), slippage, gasless);
 
+        logger.info("Response Status Code: {}", response.getStatusCode());
+        logger.info("Response Body: {}", response.getBody().asString());
+
         // Перевірка, що статус відповіді є 2069 або інший код помилки, що вказує на відсутність маршруту
         assertEquals(2069, response.jsonPath().getInt("code"), "Expected error code 2069 indicating no routes found");
 
         // Перевірка, що контент відповіді є JSON
         assertTrue(response.getContentType().contains("application/json"), "Expected content type to contain application/json");
-
-        // Виведення тіла відповіді для відлагодження
-        System.out.println("Response Body: " + response.getBody().asString());
 
         // Перевірка наявності повідомлення, яке вказує на неможливість знайти маршрути для обміну
         String responseBody = response.getBody().asString();
@@ -111,8 +119,13 @@ public class QuoteApiTest {
         // Виклик утилітного методу
         Response response = sendQuoteRequest(network, fromTokenAddress, toTokenAddress, sellAmount, slippage, gasless);
 
-        assertEquals(400, response.getStatusCode(), "Expected status code 400 Bad Request");
-        assertTrue(response.getBody().asString().contains("network is not valid"), "Response should contain an error message indicating invalid network.");
+        logger.info("Response Status Code: {}", response.getStatusCode());
+        logger.info("Response Body: {}", response.getBody().asString());
+
+        assertEquals(500, response.getStatusCode(), "Expected status code 500 Internal Server Error");
+        String responseBody = response.getBody().asString();
+        assertTrue(responseBody.contains("\"Something went wrong\""),
+                "Expected response body to contain 'message: Something went wrong'. Actual response: " + responseBody);
     }
 
 

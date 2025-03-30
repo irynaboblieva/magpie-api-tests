@@ -1,0 +1,17 @@
+<configuration>
+
+    <!-- Визначаємо, куди писатимуться логи -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>/Users/iryna/logs/magpie-api-tests.log</file>
+        <append>true</append> <!-- додавати до існуючого файлу -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} - %msg%n</pattern> <!-- формат виводу -->
+        </encoder>
+    </appender>
+
+    <!-- Визначаємо рівень логування і який аппендер використовувати -->
+    <root level="debug">
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>
