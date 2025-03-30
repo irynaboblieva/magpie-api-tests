@@ -8,16 +8,15 @@ import org.json.JSONObject;
 
 import java.math.BigDecimal;
 
-public class TokenDataProvider {
-    private static JSONArray getTokens() {
+public class TokensDataProvider {
+
+    private static JSONArray getTokens(String network) {
         String url = "https://api.magpiefi.xyz/token-manager/tokens";
         Response response = RestAssured.given()
                 .header("accept", "application/json")
                 .header("Content-Type", "application/json")
                 .body("{\n" +
-                        "  \"networkNames\": [\n" +
-                        "    \"bsc\"\n" +
-                        "  ],\n" +
+                        "  \"networkNames\": [\"" + network + "\"],\n" +
                         "  \"searchValue\": [\"\"],\n" +
                         "  \"exact\": false,\n" +
                         "  \"offset\": 0,\n" +
@@ -37,8 +36,8 @@ public class TokenDataProvider {
         }
     }
 
-    public static JSONObject getTokenByIndex(int index) {
-        JSONArray tokens = getTokens();
+    public static JSONObject getTokenByIndex(String network, int index) {
+        JSONArray tokens = getTokens(network);
         try {
             return tokens.getJSONObject(index);
         } catch (JSONException e) {
@@ -48,18 +47,17 @@ public class TokenDataProvider {
     }
 
     // Method to get the token address by index
-    public static String getTokenAddressByIndex(int index) {
-        JSONArray tokens = getTokens();
+    public static String getTokenAddressByIndex(String network, int index) {
+        JSONObject token = getTokenByIndex(network, index);
         try {
-            JSONObject token = tokens.getJSONObject(index);
-            return token.getString("address"); // Returns only the token address
+            return token.getString("address");
         } catch (JSONException e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to get address from token", e);
         }
     }
 
-    // Method to get the number of decimal places for a token
+    // Method to get the number of decimals for a token
     private static int getDecimalsForToken(JSONObject token) {
         try {
             return token.getInt("decimals");
@@ -69,12 +67,11 @@ public class TokenDataProvider {
         }
     }
 
-    // Method to calculate the sell amount with the appropriate number of decimal places
-    public static BigDecimal getSellAmountByDecimals(int index, double amount) {
-        JSONObject token = getTokenByIndex(index);
+    // Method to calculate the sell amount with the appropriate number of decimals
+    public static BigDecimal getSellAmountByDecimals(String network, int index, double amount) {
+        JSONObject token = getTokenByIndex(network, index);
         int decimals = getDecimalsForToken(token);
 
-        // Creating token amount considering the number of decimal places
         BigDecimal tokenAmount = BigDecimal.valueOf(amount);
         BigDecimal scalingFactor = BigDecimal.TEN.pow(decimals);
 
