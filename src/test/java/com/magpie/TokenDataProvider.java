@@ -81,7 +81,4 @@ public class TokenDataProvider {
         return tokenAmount.multiply(scalingFactor);
     }
 
-    public static void main(String[] args) {
-
-    }
 }
